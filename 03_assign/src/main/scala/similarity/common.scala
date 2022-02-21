@@ -1,6 +1,5 @@
 package object similarity {
 
-
   case class Shingled_Record (
     id: String,
     nWords: Int,
@@ -26,8 +25,8 @@ package object similarity {
 package similarity {
 
   import java.util.zip.CRC32
-  import scala.util.Random
   import scala.annotation.tailrec
+  import scala.util.Random
 
   object utils {
 

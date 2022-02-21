@@ -1,12 +1,7 @@
 package similarity
 
-import scala.io.Source
-
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext._
-import org.apache.spark.rdd.RDD
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.{SparkConf, SparkContext}
 
 object Main extends App {
 
@@ -27,8 +22,8 @@ object Main extends App {
     val sep = " "
     System.err.println(s"Arguments missing <filename> <delimiter> <minimumSimilarity> <shingleSize> <hashCount> <bandSize> <doJaccard> <doAllMinHashes> <printHashCoefficients> <outputHashFunctions>. Only provided ${args.size} parameters\n   Provided ${args.mkString(sep)}")
     throw new IllegalArgumentException(s"Program terminated...")
-
   }
+
   val filename = args(0)
   val SEPARATOR = args(1)
   val MIN_SIM = args(2).toDouble
@@ -40,18 +35,18 @@ object Main extends App {
   val PRINT_HASH_COEFS = args(8).toBoolean
 
   println("Computing similarity with parameters: ")
-  List(("Filename",filename), ("Separator", "[" + SEPARATOR + "]"), ("Minimum similarity", MIN_SIM),
+  List(("Filename", filename), ("Separator", "[" + SEPARATOR + "]"), ("Minimum similarity", MIN_SIM),
     ("Shingle size", SHINGLE_SIZE), ("Hash count", HASH_COUNT), ("Band size", BAND_SIZE),
     ("Compute Jaccard similarity", DO_JACCARD),
     ("Compute all minHashes similarity", DO_ALL_MIN_HASHES),
     ("Print hash coefficients", PRINT_HASH_COEFS),
-  ).map{
-    case (st, v)=>println( s"    ${st}: $v")
+  ).map {
+    case (st, v) => println(s"    ${st}: $v")
   }
   println()
 
-//-------------------------------
-// starting...
+  //-------------------------------
+  // starting...
 
   val lines = sc.textFile(filename)
 
@@ -65,39 +60,43 @@ object Main extends App {
     println(bHashCoefs)
   }
 
-  def hashFunctions : List[Hash_Func] = utils.create_hash_functions(aHashCoefs, bHashCoefs)
+  def hashFunctions: List[Hash_Func] = utils.create_hash_functions(aHashCoefs, bHashCoefs)
 
   System.err.println("Shingling records...")
 
   val docs = lines.
     filter(_.contains(SEPARATOR)).
-    map{line =>
+    map { line =>
       val tokens = line.split(SEPARATOR).filter(_ != "").toList
       minhash.shingle_line(tokens, SHINGLE_SIZE)
     }.
     filter(_.shingles.isDefined).persist
 
+  docs.foreach(println(_))
+
   System.err.println("Minhashing records...")
 
   val minHashes = docs.
-    map(r=> minhash.minhash_record(r, hashFunctions)).persist
+    map(r => minhash.minhash_record(r, hashFunctions)).persist
 
   // do lhs now
   val jac: Matches =
     if (DO_JACCARD) {
       System.err.println("Doing Jaccard comparison... this might be slow...")
       minhash.find_jaccard_matches(docs, MIN_SIM)
-    } else 
-        Array()
+    } else
+      Array()
 
-  val minHashesMatches:Matches =
+  jac.foreach(el => println(el))
+
+  val minHashesMatches: Matches =
     if (DO_ALL_MIN_HASHES) {
       System.err.println("Doing all min hashes comparison...")
       minhash.find_minhash_matches(minHashes, MIN_SIM)
     } else Array()
 
   System.err.println("Doing LHSs comparisons...")
-  
+
   val lshs = minhash.find_lsh_matches(minHashes, MIN_SIM, BAND_SIZE)
 
   System.err.println("Doing report.")
