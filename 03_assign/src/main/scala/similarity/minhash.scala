@@ -99,8 +99,20 @@ object minhash {
     filter_duplicates(matches)
   }
 
-  def find_lsh_matches(minHashes: RDD[Min_Hash_Record], minSimilarity: Double, bandSize: Int): Matches = {x
-    Array[Similarity]()
+  def create_lsh_record(minHashRecord: Min_Hash_Record, bandSize: Int): Min_Hash_Record = {
+    val lshHashes = minHashRecord.minHashes.sliding(bandSize, bandSize).foldLeft(Vector[Int]())(
+      (op, el) => {
+        op :+ utils.hash_int_lst(el.toList)
+      }
+    )
+    Min_Hash_Record(minHashRecord.id, lshHashes)
+  }
+
+  def find_lsh_matches(minHashes: RDD[Min_Hash_Record], minSimilarity: Double, bandSize: Int): Matches = {
+    find_minhash_matches(
+      minHashes.map(record => create_lsh_record(record, bandSize)).persist(),
+      minSimilarity
+    )
   }
 }
 
