@@ -72,8 +72,6 @@ object Main extends App {
     }.
     filter(_.shingles.isDefined).persist
 
-  docs.foreach(println(_))
-
   System.err.println("Minhashing records...")
 
   val minHashes = docs.

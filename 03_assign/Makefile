@@ -7,6 +7,7 @@ expected:
 	./data/test-04.sh > data/test-04.expected
 	./data/test-05.sh > data/test-05.expected
 	./data/test-06.sh > data/test-06.expected
+	./data/test-07.sh > data/test-07.expected
 
 test01:
 	./data/test-01.sh > /tmp/test-01.output
@@ -32,8 +33,12 @@ test06:
 	./data/test-06.sh > /tmp/test-06.output
 	diff data/test-06.expected /tmp/test-06.output
 
+test07:
+	./data/test-07.sh > /tmp/test-07.output
+	diff data/test-07.expected /tmp/test-07.output
 
-test: test01 test02 test03 test04 test05 test06
+
+test: test01 test02 test03 test04 test05 test06 test07
 
 zip:	dataFiles.txt
 	rm -f data.zip
