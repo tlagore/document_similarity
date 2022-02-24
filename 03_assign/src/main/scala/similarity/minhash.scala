@@ -50,53 +50,50 @@ object minhash {
   }
 
   def find_jaccard_matches(records: RDD[Shingled_Record], minSimilarity: Double): Matches = {
-    val matches = records.cartesian(records).filter(el => el._1 != el._2).aggregate(Array[Similarity]())(
+    val cartesianFiltered = records.cartesian(records).filter(el => el._1.id < el._2.id)
+
+    cartesianFiltered.aggregate(Array[Similarity]())(
       (accumulator, el) => {
         val score = compute_jaccard_pair(el._1, el._2)
-        if (score.sim > minSimilarity) accumulator :+ score else accumulator
+        if (score.sim >= minSimilarity) accumulator :+ score else accumulator
       },
       (l1,l2) => l1++l2
     )
-
-    filter_duplicates(matches)
   }
 
   def min_hash_similarity(a: Min_Hash_Record, b: Min_Hash_Record): Similarity = {
     val sameEls = a.minHashes.zip(b.minHashes).foldLeft(0)((op, pair) =>
         if (pair._1 == pair._2) op + 1 else op
       )
-    val similarity:Float = sameEls.toFloat / a.minHashes.length
+    val similarity = sameEls.toDouble / a.minHashes.length.toDouble
     Similarity(a.id, b.id, similarity)
   }
 
   def filter_duplicates(records: Matches): Matches = {
     // filter out double pairs. I.e. if we have (a,b), don't include (b,a)
-
-    val (retMatches, _) = records.foldLeft((Array[Similarity](), Set[(String, String)]()))((op, el) => {
-      if (op._2.contains((el.idA, el.idB)) || op._2.contains((el.idB, el.idA)))
-        op
+    records.foldLeft(Array[Similarity]())((op, el) => {
+      if (el.idA < el.idB)
+        op :+ el
       else
-        (op._1 :+ el, op._2 + ((el.idA, el.idB)))
+        op
     })
-
-    retMatches
   }
 
   def find_minhash_matches(records: RDD[Min_Hash_Record], minSimilarity: Double): Matches = {
-    val matches = records.cartesian(records).filter(el => el._1 != el._2).aggregate(Array[Similarity]())(
+    val cartesianFiltered = records.cartesian(records).filter(el => el._1.id < el._2.id)
+
+    cartesianFiltered.aggregate(Array[Similarity]())(
       (accumulator, el) => {
-        if (el._1.id == "t1088" && el._2.id == "t5015")
+        if (el._1.id == "t2957" && el._2.id == "t7111")
           println("here")
         val similarity = min_hash_similarity(el._1, el._2)
-        if (similarity.sim > minSimilarity)
+        if (similarity.sim >= minSimilarity)
           accumulator :+ similarity
         else
           accumulator
       },
       (l1, l2) => l1++l2
     )
-
-    filter_duplicates(matches)
   }
 
   def create_lsh_record(minHashRecord: Min_Hash_Record, bandSize: Int): Min_Hash_Record = {

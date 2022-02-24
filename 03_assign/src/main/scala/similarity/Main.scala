@@ -87,31 +87,12 @@ object Main extends App {
     } else
       Array()
 
-  println("JACCARD DOCS!!")
-  println("JACCARD DOCS!!")
-  println("JACCARD DOCS!!")
-  println("JACCARD DOCS!!")
-  jac.foreach(el => println(el))
-
-  println("minHashes!!!!")
-  println("minHashes!!!!")
-  println("minHashes!!!!")
-  println("minHashes!!!!")
-  println("minHashes!!!!")
-  minHashes.foreach(el => println(el))
-
   val minHashesMatches: Matches =
     if (DO_ALL_MIN_HASHES) {
       System.err.println("Doing all min hashes comparison...")
       minhash.find_minhash_matches(minHashes, MIN_SIM)
     } else Array()
 
-  println("minHashesMatches!!!!")
-  println("minHashesMatches!!!!")
-  println("minHashesMatches!!!!")
-  println("minHashesMatches!!!!")
-  println("minHashesMatches!!!!")
-  minHashesMatches.foreach(el => println(el))
   System.err.println("Doing LHSs comparisons...")
 
   val lshs = minhash.find_lsh_matches(minHashes, MIN_SIM, BAND_SIZE)
